@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    alumno: Alumno?,
     onLogout: () -> Unit,
     padding: PaddingValues,
     viewModel: SNViewModel = viewModel(factory = snViewModelFactory())
@@ -100,7 +99,7 @@ fun HomeScreen(
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
                 when (selectedSection) {
-                    "Inicio"   -> HomeContent(alumno)
+                    "Inicio"   -> HomeContent(viewModel)
                     "Finales"  -> FinalesScreen(viewModel)
                     "Unidades" -> UnidadesScreen(viewModel)
                     "Kardex"   -> KardexScreen(viewModel)
@@ -113,77 +112,93 @@ fun HomeScreen(
 }
 
 @Composable
-fun HomeContent(alumno: Alumno?) {
+fun HomeContent(viewModel: SNViewModel) {
+    val uiState = viewModel.uiState
+    val alumno = uiState.alumno
     if (alumno == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
+    Column(modifier = Modifier.fillMaxSize()) {
+        val ultimaSync = listOfNotNull(
+            uiState.fechaActualizacionKardex,
+            uiState.fechaActualizacionFinales,
+            uiState.fechaActualizacionUnidades,
+            uiState.fechaActualizacionCarga
+        ).maxOrNull()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        TimestampBanner(
+            lastSyncTimestamp = ultimaSync,
+            isOnline          = uiState.isOnline
+        )
+
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    modifier = Modifier.size(64.dp).clip(CircleShape),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-                Spacer(Modifier.width(16.dp))
-                Column {
-                    Text(alumno.nombre, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("Matrícula: ${alumno.matricula}", style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            InfoCard("Estatus", alumno.estatus, Icons.Default.Info, Modifier.weight(1f))
-            InfoCard("Semestre", "${alumno.semActual}°", Icons.Default.School, Modifier.weight(1f))
-        }
-
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Información de Carrera", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                HorizontalDivider()
-                DetailRow("Carrera", alumno.carrera)
-                DetailRow("Especialidad", alumno.especialidad)
-                DetailRow("Créditos Totales", "${alumno.cdtosAcumulados}")
-                DetailRow("modEducativo", "${alumno.modEducativo}")
-            }
-        }
-
-        if (alumno.adeudo) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
             ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        "Adeudo detectado: ${alumno.adeudoDescriptivo}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(64.dp).clip(CircleShape),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(alumno.nombre, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Matrícula: ${alumno.matricula}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                InfoCard("Estatus", alumno.estatus, Icons.Default.Info, Modifier.weight(1f))
+                InfoCard("Semestre", "${alumno.semActual}°", Icons.Default.School, Modifier.weight(1f))
+            }
+
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Información de Carrera", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    HorizontalDivider()
+                    DetailRow("Carrera", alumno.carrera)
+                    DetailRow("Especialidad", alumno.especialidad)
+                    DetailRow("Créditos Totales", "${alumno.cdtosAcumulados}")
+                    DetailRow("modEducativo", "${alumno.modEducativo}")
+                }
+            }
+
+            if (alumno.adeudo) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            "Adeudo detectado: ${alumno.adeudoDescriptivo}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
             }
         }

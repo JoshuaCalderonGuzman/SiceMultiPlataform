@@ -9,6 +9,15 @@ import java.net.Socket
 actual class ConnectivityMonitor actual constructor(context: Any) {
     actual val isConnected: Flow<Boolean> = flow {
         var lastState = false
+        val initialState = try {
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress("8.8.8.8", 53), 1500)
+                true
+            }
+        } catch (e: Exception) { false }
+
+        emit(initialState)
+        lastState = initialState
         while (true) {
             val connected = try {
                 Socket().use { socket ->

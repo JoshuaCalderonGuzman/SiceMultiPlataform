@@ -68,7 +68,9 @@ fun CargaAcademicaSection(lista: List<MateriaCarga>) {
             Text("Horario de Hoy ($hoyDisplay)", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
 
-        val materiasHoy = lista.filter { it.obtenerHorarioPorDia(hoy).isNotBlank() }
+        val materiasHoy = lista
+            .filter { it.obtenerHorarioPorDia(hoy).isNotBlank() }
+            .sortedBy { it.obtenerHorarioPorDia(hoy) }
 
         if (materiasHoy.isEmpty()) {
             Text("No tienes clases programadas para hoy.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)

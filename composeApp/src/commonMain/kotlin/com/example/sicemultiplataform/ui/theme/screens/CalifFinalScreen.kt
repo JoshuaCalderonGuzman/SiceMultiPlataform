@@ -53,11 +53,60 @@ fun FinalesSection(calificaciones: List<CalificacionFinal>) {
         return
     }
 
+    val califsValidas = calificaciones.filter { it.calif > 0 }
+    val promedio = if (califsValidas.isNotEmpty())
+        califsValidas.sumOf { it.calif }.toDouble() / califsValidas.size
+    else 0.0
+
+    val colorPromedio = when {
+        promedio >= 90 -> MaterialTheme.colorScheme.primaryContainer
+        promedio >= 70 -> MaterialTheme.colorScheme.secondaryContainer
+        else           -> MaterialTheme.colorScheme.errorContainer
+    }
+    val colorTexto = when {
+        promedio >= 90 -> MaterialTheme.colorScheme.onPrimaryContainer
+        promedio >= 70 -> MaterialTheme.colorScheme.onSecondaryContainer
+        else           -> MaterialTheme.colorScheme.onErrorContainer
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colorPromedio)
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "Promedio General",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colorTexto
+                        )
+                        Text(
+                            "${califsValidas.size} materias acreditadas",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colorTexto.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text(
+                        "%.1f".format(promedio),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = colorTexto
+                    )
+                }
+            }
+        }
+
         item { }
         items(calificaciones) { calif ->
             Card(modifier = Modifier.fillMaxWidth()) {

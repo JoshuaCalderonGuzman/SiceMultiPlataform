@@ -18,7 +18,6 @@ fun App() {
         Scaffold { padding ->
             if (uiState.isLogged) {
                 HomeScreen(
-                    alumno   = uiState.alumno,
                     padding  = padding,
                     onLogout = { snViewModel.logout() }
                 )

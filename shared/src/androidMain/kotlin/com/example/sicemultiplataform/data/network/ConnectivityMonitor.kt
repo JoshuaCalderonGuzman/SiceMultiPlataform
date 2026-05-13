@@ -28,6 +28,10 @@ actual class ConnectivityMonitor actual constructor(context: Any) {
             .build()
 
         manager.registerNetworkCallback(request, callback)
+        val activeNetwork = manager.activeNetwork
+        val capabilities  = manager.getNetworkCapabilities(activeNetwork)
+        val hayConexion   = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        trySend(hayConexion)
         awaitClose { manager.unregisterNetworkCallback(callback) }
     }
 }
