@@ -30,7 +30,7 @@ fun CargaAcademicaScreen(viewModel: SNViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TimestampBanner(                                    // ← reemplaza el Surface de antes
+        TimestampBanner(
             lastSyncTimestamp = uiState.fechaActualizacionCarga,
             isOnline          = uiState.isOnline
         )
@@ -86,17 +86,65 @@ fun CargaAcademicaSection(lista: List<MateriaCarga>) {
 
 @Composable
 fun MateriaCard(materia: MateriaCarga, destacarDia: String? = null) {
+    val horarioHoy = destacarDia?.let { materia.obtenerHorarioPorDia(it) } ?: ""
+    val enClaseAhora = destacarDia != null && estaEnClase(horarioHoy)
+
+    val containerColor = if (enClaseAhora)
+        MaterialTheme.colorScheme.primaryContainer
+    else
+        MaterialTheme.colorScheme.surface
+
+    val borderColor = if (enClaseAhora)
+        MaterialTheme.colorScheme.primary
+    else
+        MaterialTheme.colorScheme.outlineVariant
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (enClaseAhora) 6.dp else 2.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = androidx.compose.foundation.BorderStroke(
+            width = if (enClaseAhora) 2.dp else 0.dp,
+            color = borderColor
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(materia.materia, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Docente: ${materia.docente}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    materia.materia,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                if (enClaseAhora) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            "EN CURSO",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+
+            Text(
+                "Docente: ${materia.docente}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (destacarDia != null) {
-                    DiaRow(destacarDia.take(3), materia.obtenerHorarioPorDia(destacarDia), true)
+                    DiaRow(destacarDia.take(3), horarioHoy, true)
                 } else {
                     DiaRow("Lun", materia.lunes)
                     DiaRow("Mar", materia.martes)
@@ -181,4 +229,19 @@ fun formatTimestamp(timestamp: Long): String {
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
         .withZone(ZoneId.systemDefault())
     return formatter.format(Instant.ofEpochMilli(timestamp))
+}
+
+fun estaEnClase(horario: String): Boolean {
+    return try {
+        val rango = horario.trim().substringBefore(" ")
+        val partes = rango.split("-")
+        if (partes.size < 2) return false
+
+        val inicio = partes[0].split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+        val fin    = partes[1].split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+
+        val ahora  = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+
+        ahora in inicio until fin
+    } catch (e: Exception) { false }
 }

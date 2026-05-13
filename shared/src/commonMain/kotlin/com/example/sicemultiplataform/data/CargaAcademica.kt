@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.intOrNull
 
+
 @Serializable
 data class MateriaCarga(
     val materia: String,
@@ -25,7 +26,7 @@ data class MateriaCarga(
     val sabado: String
 ) {
     fun obtenerHorarioPorDia(dia: String): String {
-        return when (dia) {
+        val horario = when (dia) {
             "Lunes"     -> lunes
             "Martes"    -> martes
             "Miercoles" -> miercoles
@@ -34,6 +35,10 @@ data class MateriaCarga(
             "Sabado"    -> sabado
             else        -> ""
         }
+
+        println("HORARIO_DEBUG -> Día: $dia | Horario devuelto: '$horario'")
+
+        return horario
     }
 }
 

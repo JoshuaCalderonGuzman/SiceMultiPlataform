@@ -28,6 +28,7 @@ import kotlinx.serialization.json.Json
 data class SNUiState(
     val isLoading: Boolean = false,
     val isLogged: Boolean = false,
+    val sesionServidor: Boolean = false,
     val alumno: Alumno? = null,
     val kardex: KardexCompleto? = null,
     val califFinales: List<CalificacionFinal>? = null,
@@ -94,11 +95,19 @@ class SNViewModel(
     private fun observarConectividad() {
         viewModelScope.launch {
             connectivityMonitor.isConnected.collect { conectado ->
-                uiState = uiState.copy(isOnline = conectado)  // ← siempre actualizar
+                uiState = uiState.copy(isOnline = conectado)
                 if (conectado && uiState.isLogged) {
-                    val matricula    = uiState.alumno?.matricula ?: return@collect
-                    val modEducativo = uiState.alumno?.modEducativo ?: return@collect
-                    sincronizarTodo(matricula, modEducativo)
+                    if (uiState.sesionServidor) {
+                        // Sesión activa → solo sincronizar
+                        val matricula    = uiState.alumno?.matricula    ?: return@collect
+                        val modEducativo = uiState.alumno?.modEducativo ?: return@collect
+                        sincronizarTodo(matricula, modEducativo)
+                    } else {
+                        // Sin sesión en servidor → re-autenticar primero
+                        val matricula = sessionManager.obtenerMatricula() ?: return@collect
+                        val password  = sessionManager.obtenerPassword()  ?: return@collect
+                        login(matricula, password)
+                    }
                 }
             }
         }
@@ -132,6 +141,7 @@ class SNViewModel(
                     // Cargar UI inmediatamente con datos de red
                     uiState = uiState.copy(
                         isLogged  = true,
+                        sesionServidor = true,
                         isLoading = false,
                         alumno    = alumnoParsed
                     )
@@ -218,6 +228,7 @@ class SNViewModel(
 
         uiState = uiState.copy(
             isLogged  = true,
+            sesionServidor = false,
             isLoading = false,
             alumno    = alumno,
             errorMessage = "Modo sin conexión",

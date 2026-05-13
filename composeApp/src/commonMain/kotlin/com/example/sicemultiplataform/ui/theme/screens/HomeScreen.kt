@@ -1,5 +1,7 @@
 package com.example.sicemultiplataform.ui.theme.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -185,6 +187,8 @@ fun HomeContent(viewModel: SNViewModel) {
                 }
             }
 
+            ProximaClaseCard(viewModel)
+
             if (alumno.adeudo) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
@@ -246,6 +250,185 @@ fun PlaceholderSection(name: String) {
                 tint = MaterialTheme.colorScheme.outline
             )
             Text("Sección $name en desarrollo", color = MaterialTheme.colorScheme.outline)
+        }
+    }
+}
+data class ClaseInfo(
+    val containerColor: Color,
+    val label: String,
+    val materia: String,
+    val aula: String,
+    val horaTexto: String
+)
+
+@Composable
+fun ProximaClaseCard(viewModel: SNViewModel) {
+    val uiState = viewModel.uiState
+    if (uiState.isLoading || (!uiState.isLoading && uiState.cargaAcademica == null && uiState.isLogged)) {
+        ProximaClaseSkeleton()
+        return
+    }
+    val carga = uiState.cargaAcademica ?: return
+
+    val hoy = obtenerDiaActual()
+    if (hoy.isEmpty()) return
+
+    val ahoraMinutos = java.time.LocalTime.now(java.time.ZoneId.systemDefault())
+        .let { it.hour * 60 + it.minute }
+
+    val proxima = carga
+        .mapNotNull { materia ->
+            val horario = materia.obtenerHorarioPorDia(hoy)
+            if (horario.isBlank()) return@mapNotNull null
+            val rango = horario.trim().substringBefore(" ")
+            val partes = rango.split("-")
+            if (partes.size < 2) return@mapNotNull null
+            val inicioMin = runCatching {
+                partes[0].split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+            }.getOrNull() ?: return@mapNotNull null
+            val aula = horario.substringAfter("Aula:", "").trim()
+            Triple(materia, inicioMin, aula)
+        }
+        .filter { (_, inicio, _) -> inicio > ahoraMinutos }
+        .minByOrNull { (_, inicio, _) -> inicio }
+        ?: return
+
+    val minutosRestantes = proxima.second - ahoraMinutos
+    val tiempoTexto = when {
+        minutosRestantes < 60 -> "en $minutosRestantes min"
+        else -> "en ${minutosRestantes / 60}h ${minutosRestantes % 60}min"
+    }
+    val horaInicio = "%02d:%02d".format(proxima.second / 60, proxima.second % 60)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+
+            // Label con punto azul
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(6.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary
+                ) {}
+                Text(
+                    "PRÓXIMA CLASE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // Nombre de la materia
+            Text(
+                proxima.first.materia,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                lineHeight = MaterialTheme.typography.titleMedium.lineHeight
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+            // Footer: aula + hora
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Pill de aula
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.MeetingRoom,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            "Aula ${proxima.third}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Hora + tiempo restante
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        horaInicio,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        tiempoTexto,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ProximaClaseSkeleton() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Box(
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(10.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.75f)
+                    .height(18.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(80.dp)
+                        .height(26.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(32.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            }
         }
     }
 }
