@@ -1,0 +1,17 @@
+CREATE TABLE kardex (
+    control TEXT NOT NULL PRIMARY KEY,
+    jsonData TEXT NOT NULL,
+    ultimaActualizacion INTEGER NOT NULL
+);
+
+insertOrReplace:
+INSERT OR REPLACE INTO kardex VALUES (?, ?, ?);
+
+getByControl:
+SELECT * FROM kardex WHERE control = ? LIMIT 1;
+
+getAll:
+SELECT * FROM kardex;
+
+deleteByControl:
+DELETE FROM kardex WHERE control = ?;

@@ -1,0 +1,17 @@
+CREATE TABLE carga (
+    control TEXT NOT NULL PRIMARY KEY,
+    jsonData TEXT NOT NULL,
+    ultimaActualizacion INTEGER NOT NULL
+);
+
+insertOrReplace:
+INSERT OR REPLACE INTO carga VALUES (?, ?, ?);
+
+getByControl:
+SELECT * FROM carga WHERE control = ? LIMIT 1;
+
+getAll:
+SELECT * FROM carga;
+
+deleteByControl:
+DELETE FROM carga WHERE control = ?;

@@ -1,0 +1,18 @@
+-- Carga.sq
+CREATE TABLE alumno (
+    control TEXT NOT NULL PRIMARY KEY,
+    jsonData TEXT NOT NULL,
+    ultimaActualizacion INTEGER NOT NULL
+);
+
+insertOrReplace:
+INSERT OR REPLACE INTO alumno VALUES (?, ?, ?);
+
+getByControl:
+SELECT * FROM alumno WHERE control = ? LIMIT 1;
+
+getAll:
+SELECT * FROM alumno;
+
+deleteByControl:
+DELETE FROM alumno WHERE control = ?;

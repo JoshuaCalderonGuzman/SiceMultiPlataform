@@ -1,0 +1,18 @@
+
+CREATE TABLE calificaciones_unidades (
+    control TEXT NOT NULL PRIMARY KEY,
+    jsonData TEXT NOT NULL,
+    ultimaActualizacion INTEGER NOT NULL
+);
+
+insertOrReplace:
+INSERT OR REPLACE INTO calificaciones_unidades VALUES (?, ?, ?);
+
+getByControl:
+SELECT * FROM calificaciones_unidades WHERE control = ? LIMIT 1;
+
+getAll:
+SELECT * FROM calificaciones_unidades;
+
+deleteByControl:
+DELETE FROM calificaciones_unidades WHERE control = ?;

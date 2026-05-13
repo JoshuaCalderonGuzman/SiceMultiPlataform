@@ -1,0 +1,18 @@
+-- Carga.sq
+CREATE TABLE calificaciones_finales (
+    control TEXT NOT NULL PRIMARY KEY,
+    jsonData TEXT NOT NULL,
+    ultimaActualizacion INTEGER NOT NULL
+);
+
+insertOrReplace:
+INSERT OR REPLACE INTO calificaciones_finales VALUES (?, ?, ?);
+
+getByControl:
+SELECT * FROM calificaciones_finales WHERE control = ? LIMIT 1;
+
+getAll:
+SELECT * FROM calificaciones_finales;
+
+deleteByControl:
+DELETE FROM calificaciones_finales WHERE control = ?;
