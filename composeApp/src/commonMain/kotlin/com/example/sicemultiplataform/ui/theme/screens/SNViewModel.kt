@@ -83,9 +83,11 @@ class SNViewModel(
         viewModelScope.launch {
             while (true) {
                 delay(5 * 60 * 1000L) // esperar 5 minutos
+
                 if (uiState.isLogged && uiState.isOnline) {
                     val matricula    = uiState.alumno?.matricula ?: continue
                     val modEducativo = uiState.alumno?.modEducativo ?: continue
+
                     sincronizarTodo(matricula, modEducativo)
                 }
             }

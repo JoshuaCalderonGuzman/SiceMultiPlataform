@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sicemultiplataform.data.Alumno
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -123,6 +124,7 @@ fun HomeContent(viewModel: SNViewModel) {
         }
         return
     }
+    println("DEBUG ESTATUS = '${alumno.estatus}'")
     Column(modifier = Modifier.fillMaxSize()) {
         val ultimaSync = listOfNotNull(
             uiState.fechaActualizacionKardex,
@@ -172,7 +174,7 @@ fun HomeContent(viewModel: SNViewModel) {
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                InfoCard("Estatus", alumno.estatus, Icons.Default.Info, Modifier.weight(1f))
+                InfoCard("Estatus", formatoEstatus(alumno.estatus), Icons.Default.Info, Modifier.weight(1f))
                 InfoCard("Semestre", "${alumno.semActual}°", Icons.Default.School, Modifier.weight(1f))
             }
 
@@ -253,13 +255,7 @@ fun PlaceholderSection(name: String) {
         }
     }
 }
-data class ClaseInfo(
-    val containerColor: Color,
-    val label: String,
-    val materia: String,
-    val aula: String,
-    val horaTexto: String
-)
+
 
 @Composable
 fun ProximaClaseCard(viewModel: SNViewModel) {
@@ -273,8 +269,21 @@ fun ProximaClaseCard(viewModel: SNViewModel) {
     val hoy = obtenerDiaActual()
     if (hoy.isEmpty()) return
 
-    val ahoraMinutos = java.time.LocalTime.now(java.time.ZoneId.systemDefault())
-        .let { it.hour * 60 + it.minute }
+    var ahoraMinutos by remember {
+        mutableIntStateOf(
+            java.time.LocalTime.now(java.time.ZoneId.systemDefault())
+                .let { it.hour * 60 + it.minute }
+        )
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val ahora = java.time.LocalTime.now(java.time.ZoneId.systemDefault())
+            val segundosHastaProximoMinuto = 60L - ahora.second
+            delay(segundosHastaProximoMinuto * 1000L)
+            ahoraMinutos = java.time.LocalTime.now(java.time.ZoneId.systemDefault())
+                .let { it.hour * 60 + it.minute }
+        }
+    }
 
     val proxima = carga
         .mapNotNull { materia ->
@@ -291,7 +300,40 @@ fun ProximaClaseCard(viewModel: SNViewModel) {
         }
         .filter { (_, inicio, _) -> inicio > ahoraMinutos }
         .minByOrNull { (_, inicio, _) -> inicio }
-        ?: return
+
+    if (proxima == null) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    Icons.Default.EventBusy,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+                Column {
+                    Text(
+                        "Sin clases pendientes",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        "No tienes más clases hoy",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        return
+    }
 
     val minutosRestantes = proxima.second - ahoraMinutos
     val tiempoTexto = when {
@@ -306,8 +348,6 @@ fun ProximaClaseCard(viewModel: SNViewModel) {
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-
-            // Label con punto azul
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -327,7 +367,6 @@ fun ProximaClaseCard(viewModel: SNViewModel) {
 
             Spacer(Modifier.height(8.dp))
 
-            // Nombre de la materia
             Text(
                 proxima.first.materia,
                 style = MaterialTheme.typography.titleMedium,
@@ -337,13 +376,11 @@ fun ProximaClaseCard(viewModel: SNViewModel) {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-            // Footer: aula + hora
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Pill de aula
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,
                     shape = MaterialTheme.shapes.small
@@ -368,7 +405,6 @@ fun ProximaClaseCard(viewModel: SNViewModel) {
                     }
                 }
 
-                // Hora + tiempo restante
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         horaInicio,
@@ -430,5 +466,12 @@ fun ProximaClaseSkeleton() {
                 )
             }
         }
+    }
+}
+fun formatoEstatus(valor: String): String {
+    return when (valor) {
+        "VI" -> "VIGENTE"
+        "BA" -> "BAJA"
+        else -> valor
     }
 }

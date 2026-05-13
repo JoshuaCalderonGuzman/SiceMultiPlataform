@@ -35,6 +35,10 @@ fun parseAlumno(xml: String): Alumno {
 
     val json = Json.parseToJsonElement(jsonString).jsonObject
 
+    println("RAW XML = $xml")
+    println("JSON STRING = $jsonString")
+    println("ESTATUS RAW JSON = ${json["estatus"]}")
+
     return Alumno(
         fechaReins        = json["fechaReins"]?.jsonPrimitive?.content ?: "",
         modEducativo      = json["modEducativo"]?.jsonPrimitive?.intOrNull ?: 0,
@@ -52,4 +56,6 @@ fun parseAlumno(xml: String): Alumno {
         nombre            = json["nombre"]?.jsonPrimitive?.content ?: "",
         matricula         = json["matricula"]?.jsonPrimitive?.content ?: "",
     )
+
+
 }

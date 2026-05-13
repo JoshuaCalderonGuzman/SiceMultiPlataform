@@ -168,7 +168,7 @@ fun DiaRow(nombreDia: String, horario: String, destacado: Boolean = false) {
     }
 }
 
-// kotlinx-datetime reemplaza java.util.Calendar
+
 fun obtenerDiaActual(): String {
     val dow = java.time.LocalDate.now().dayOfWeek.value
     return when (dow) {
