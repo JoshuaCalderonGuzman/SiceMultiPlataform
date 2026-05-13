@@ -35,7 +35,8 @@ data class SNUiState(
     val fechaActualizacionKardex: Long? = null,
     val fechaActualizacionFinales: Long? = null,
     val fechaActualizacionUnidades: Long? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isOnline: Boolean = true
 )
 
 class SNViewModel(
@@ -56,10 +57,10 @@ class SNViewModel(
     private fun observarConectividad() {
         viewModelScope.launch {
             connectivityMonitor.isConnected.collect { conectado ->
+                uiState = uiState.copy(isOnline = conectado)  // ← siempre actualizar
                 if (conectado && uiState.isLogged) {
-                    val matricula = uiState.alumno?.matricula ?: return@collect
+                    val matricula    = uiState.alumno?.matricula ?: return@collect
                     val modEducativo = uiState.alumno?.modEducativo ?: return@collect
-                    println("INTERNET RESTORED — re-sincronizando...")
                     sincronizarTodo(matricula, modEducativo)
                 }
             }
@@ -211,8 +212,7 @@ class SNViewModel(
         }
     }
 
-    // Las funciones cargarX ahora solo refrescan desde BD
-    // ya no necesitan Context ni Workers
+    // Las funciones ahora solo refrescan desde BD
     fun cargarCargaAcademica(matricula: String) {
         viewModelScope.launch {
             val local = localRepository.getCargaByControl(matricula)

@@ -25,18 +25,10 @@ fun FinalesScreen(viewModel: SNViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        uiState.fechaActualizacionFinales?.let { timestamp ->
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    formatTimestamp(timestamp),
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(16.dp, 8.dp)
-                )
-            }
-        }
+        TimestampBanner(
+            lastSyncTimestamp = uiState.fechaActualizacionFinales,
+            isOnline          = uiState.isOnline
+        )
         FinalesSection(calificaciones = uiState.califFinales ?: emptyList())
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sicemultiplataform.data.MateriaCarga
+import kotlinx.coroutines.delay
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.Instant
@@ -29,19 +30,11 @@ fun CargaAcademicaScreen(viewModel: SNViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        uiState.fechaActualizacionCarga?.let { timestamp ->
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    formatTimestamp(timestamp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-            }
-        }
+        TimestampBanner(                                    // ← reemplaza el Surface de antes
+            lastSyncTimestamp = uiState.fechaActualizacionCarga,
+            isOnline          = uiState.isOnline
+        )
+
 
         if (uiState.isLoading && uiState.cargaAcademica.isNullOrEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -69,7 +62,10 @@ fun CargaAcademicaSection(lista: List<MateriaCarga>) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(8.dp))
-            Text("Horario de Hoy ($hoy)", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            val hoyDisplay = hoy
+                .replace("Miercoles", "Miércoles")
+                .replace("Sabado", "Sábado")
+            Text("Horario de Hoy ($hoyDisplay)", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
 
         val materiasHoy = lista.filter { it.obtenerHorarioPorDia(hoy).isNotBlank() }
@@ -124,10 +120,65 @@ fun DiaRow(nombreDia: String, horario: String, destacado: Boolean = false) {
 
 // kotlinx-datetime reemplaza java.util.Calendar
 fun obtenerDiaActual(): String {
-    return java.time.LocalDate.now()
-        .dayOfWeek
-        .getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("es", "MX"))
-        .replaceFirstChar { it.uppercase() }
+    val dow = java.time.LocalDate.now().dayOfWeek.value
+    return when (dow) {
+        1 -> "Lunes"
+        2 -> "Martes"
+        3 -> "Miercoles"
+        4 -> "Jueves"
+        5 -> "Viernes"
+        6 -> "Sabado"
+        else -> ""
+    }
+}
+@Composable
+fun TimestampBanner(lastSyncTimestamp: Long?, isOnline: Boolean) {
+
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(isOnline) {
+        while (isOnline) {
+            delay(1000)
+            now = System.currentTimeMillis()
+        }
+    }
+
+    val displayText = when {
+        isOnline && lastSyncTimestamp != null ->
+            "Actualizado: ${formatTimestamp(lastSyncTimestamp)}  •  hace ${formatElapsed(now - lastSyncTimestamp)}"
+        isOnline ->
+            "Sincronizando..."
+        lastSyncTimestamp != null ->
+            "Sin conexión desde: ${formatTimestamp(lastSyncTimestamp)}"
+        else ->
+            "Sin conexión — sin datos guardados"
+    }
+
+    Surface(
+        color = if (isOnline)
+            MaterialTheme.colorScheme.secondaryContainer
+        else
+            MaterialTheme.colorScheme.errorContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            displayText,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isOnline)
+                MaterialTheme.colorScheme.onSecondaryContainer
+            else
+                MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(16.dp, 8.dp)
+        )
+    }
+}
+
+fun formatElapsed(millis: Long): String {
+    val s = millis / 1000
+    return when {
+        s < 60   -> "${s}s"
+        s < 3600 -> "${s / 60}m ${s % 60}s"
+        else     -> "${s / 3600}h ${(s % 3600) / 60}m"
+    }
 }
 
 // Función compartida para formatear timestamps

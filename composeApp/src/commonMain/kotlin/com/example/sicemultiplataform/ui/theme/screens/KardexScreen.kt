@@ -29,18 +29,10 @@ fun KardexScreen(viewModel: SNViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        uiState.fechaActualizacionKardex?.let { timestamp ->
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    formatTimestamp(timestamp),
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(16.dp, 8.dp)
-                )
-            }
-        }
+        TimestampBanner(
+            lastSyncTimestamp = uiState.fechaActualizacionKardex,
+            isOnline          = uiState.isOnline
+        )
         KardexSection(kardex = uiState.kardex)
     }
 }

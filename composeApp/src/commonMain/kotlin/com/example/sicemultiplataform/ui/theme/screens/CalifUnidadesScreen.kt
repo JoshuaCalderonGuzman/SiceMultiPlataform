@@ -22,18 +22,10 @@ fun UnidadesScreen(viewModel: SNViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        uiState.fechaActualizacionUnidades?.let { timestamp ->
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    formatTimestamp(timestamp),
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(16.dp, 8.dp)
-                )
-            }
-        }
+        TimestampBanner(
+            lastSyncTimestamp = uiState.fechaActualizacionUnidades,
+            isOnline          = uiState.isOnline
+        )
         UnidadesSection(materias = uiState.califUnidades ?: emptyList())
     }
 }
