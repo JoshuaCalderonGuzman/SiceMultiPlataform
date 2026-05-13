@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sicemultiplataform.data.local.DatabaseDriverFactory
 import com.example.sicemultiplataform.data.DefaultAppContainerDesktop
 import com.example.sicemultiplataform.data.network.ConnectivityMonitor
+import com.example.sicemultiplataform.data.segurity.SecureSessionManager
 
 actual fun snViewModelFactory(): ViewModelProvider.Factory = viewModelFactory {
     initializer {
@@ -14,7 +15,8 @@ actual fun snViewModelFactory(): ViewModelProvider.Factory = viewModelFactory {
         SNViewModel(
             snRepository    = container.snRepository,
             localRepository = container.localRepository,
-            connectivityMonitor = ConnectivityMonitor(Unit)
+            connectivityMonitor = ConnectivityMonitor(Unit),
+            sessionManager      = SecureSessionManager()
         )
     }
 }

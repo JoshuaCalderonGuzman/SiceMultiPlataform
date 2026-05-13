@@ -5,7 +5,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import androidx.core.content.edit
 
-class SecureSessionManager(context: Context) {
+actual class SecureSessionManager(private val context: Context) {
 
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -19,22 +19,17 @@ class SecureSessionManager(context: Context) {
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    fun guardarSesion(matricula: String, password: String) {
+    actual fun guardarSesion(matricula: String, password: String) {
         securePrefs.edit {
             putString("matricula", matricula)
-                .putString("password", password)
+            putString("password", password)
         }
     }
 
-    fun obtenerMatricula(): String? {
-        return securePrefs.getString("matricula", null)
-    }
+    actual fun obtenerMatricula(): String? = securePrefs.getString("matricula", null)
+    actual fun obtenerPassword(): String?  = securePrefs.getString("password", null)
 
-    fun obtenerPassword(): String? {
-        return securePrefs.getString("password", null)
-    }
-
-    fun cerrarSesion() {
+    actual fun cerrarSesion() {
         securePrefs.edit { clear() }
     }
 }

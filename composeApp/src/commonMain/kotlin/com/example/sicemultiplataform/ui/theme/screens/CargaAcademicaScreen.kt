@@ -134,28 +134,30 @@ fun obtenerDiaActual(): String {
 @Composable
 fun TimestampBanner(lastSyncTimestamp: Long?, isOnline: Boolean) {
 
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var mostrarRestablecida by remember { mutableStateOf(false) }
+    var anteriorOnline by remember { mutableStateOf(isOnline) }
+
     LaunchedEffect(isOnline) {
-        while (isOnline) {
-            delay(1000)
-            now = System.currentTimeMillis()
+        if (isOnline && !anteriorOnline) {
+            mostrarRestablecida = true
+            delay(3000)
+            mostrarRestablecida = false
         }
+        anteriorOnline = isOnline
     }
 
+    // No mostrar nada si hay conexión y ya pasaron los 3 segundos
+    if (isOnline && !mostrarRestablecida) return
+
     val displayText = when {
-        isOnline && lastSyncTimestamp != null ->
-            "Actualizado: ${formatTimestamp(lastSyncTimestamp)}  •  hace ${formatElapsed(now - lastSyncTimestamp)}"
-        isOnline ->
-            "Sincronizando..."
-        lastSyncTimestamp != null ->
-            "Sin conexión desde: ${formatTimestamp(lastSyncTimestamp)}"
-        else ->
-            "Sin conexión — sin datos guardados"
+        mostrarRestablecida          -> "Conexión restablecida"
+        lastSyncTimestamp != null    -> "Sin conexión desde: ${formatTimestamp(lastSyncTimestamp)}"
+        else                         -> "Sin conexión — sin datos guardados"
     }
 
     Surface(
-        color = if (isOnline)
-            MaterialTheme.colorScheme.secondaryContainer
+        color = if (mostrarRestablecida)
+            MaterialTheme.colorScheme.primaryContainer
         else
             MaterialTheme.colorScheme.errorContainer,
         modifier = Modifier.fillMaxWidth()
@@ -163,21 +165,12 @@ fun TimestampBanner(lastSyncTimestamp: Long?, isOnline: Boolean) {
         Text(
             displayText,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isOnline)
-                MaterialTheme.colorScheme.onSecondaryContainer
+            color = if (mostrarRestablecida)
+                MaterialTheme.colorScheme.onPrimaryContainer
             else
                 MaterialTheme.colorScheme.onErrorContainer,
             modifier = Modifier.padding(16.dp, 8.dp)
         )
-    }
-}
-
-fun formatElapsed(millis: Long): String {
-    val s = millis / 1000
-    return when {
-        s < 60   -> "${s}s"
-        s < 3600 -> "${s / 60}m ${s % 60}s"
-        else     -> "${s / 3600}h ${(s % 3600) / 60}m"
     }
 }
 

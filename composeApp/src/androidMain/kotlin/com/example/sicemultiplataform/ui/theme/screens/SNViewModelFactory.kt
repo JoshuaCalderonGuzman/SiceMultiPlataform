@@ -12,7 +12,8 @@ actual fun snViewModelFactory(): ViewModelProvider.Factory = viewModelFactory {
         SNViewModel(
             snRepository        = app.container.snRepository,
             localRepository     = app.container.localRepository,
-            connectivityMonitor = app.connectivityMonitor
+            connectivityMonitor = app.connectivityMonitor,
+            sessionManager      = app.sessionManager
         )
     }
 }

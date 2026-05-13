@@ -18,7 +18,9 @@ import com.example.sicemultiplataform.data.local.entity.CalifFinalEntity
 import com.example.sicemultiplataform.data.local.entity.CalifUnidadesEntity
 import com.example.sicemultiplataform.data.repository.LocalRepository
 import com.example.sicemultiplataform.data.network.ConnectivityMonitor
+import com.example.sicemultiplataform.data.segurity.SecureSessionManager
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -42,7 +44,8 @@ data class SNUiState(
 class SNViewModel(
     private val snRepository: SNRepository,
     private val localRepository: LocalRepository,
-    private val connectivityMonitor: ConnectivityMonitor
+    private val connectivityMonitor: ConnectivityMonitor,
+    private val sessionManager: SecureSessionManager
 ) : ViewModel() {
 
     private val jsonParser = Json { ignoreUnknownKeys = true }
@@ -52,6 +55,40 @@ class SNViewModel(
 
     init {
         observarConectividad()
+        iniciarSyncPeriodico()
+        autoLogin()
+    }
+
+    fun autoLogin() {
+        viewModelScope.launch {
+            val matricula = sessionManager.obtenerMatricula() ?: return@launch
+            val password  = sessionManager.obtenerPassword()  ?: return@launch
+
+            uiState = uiState.copy(isLoading = true)
+
+            if (uiState.isOnline) {
+                // Con internet: login normal
+                login(matricula, password)
+            } else {
+                // Sin internet: cargar desde BD local directamente
+                cargarDesdeLocal(matricula)
+            }
+        }
+    }
+
+
+
+    private fun iniciarSyncPeriodico() {
+        viewModelScope.launch {
+            while (true) {
+                delay(5 * 60 * 1000L) // esperar 5 minutos
+                if (uiState.isLogged && uiState.isOnline) {
+                    val matricula    = uiState.alumno?.matricula ?: continue
+                    val modEducativo = uiState.alumno?.modEducativo ?: continue
+                    sincronizarTodo(matricula, modEducativo)
+                }
+            }
+        }
     }
 
     private fun observarConectividad() {
@@ -80,6 +117,8 @@ class SNViewModel(
                         uiState = uiState.copy(isLoading = false, errorMessage = "Sesión incorrecta, intenta nuevamente")
                         return@launch
                     }
+
+                    sessionManager.guardarSesion(m, p)
 
                     // Guardar alumno en BD local
                     localRepository.saveAlumno(
@@ -208,6 +247,7 @@ class SNViewModel(
     fun logout() {
         viewModelScope.launch {
             snRepository.logoutSession()
+            sessionManager.cerrarSesion()
             uiState = SNUiState()
         }
     }
@@ -260,4 +300,6 @@ class SNViewModel(
             }
         }
     }
+
+
 }
