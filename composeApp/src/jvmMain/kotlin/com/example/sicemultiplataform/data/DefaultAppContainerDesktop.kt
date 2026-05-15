@@ -7,6 +7,7 @@ import com.example.sicemultiplataform.data.local.dao.*
 import com.example.sicemultiplataform.data.repository.LocalRepository
 import com.example.sicemultiplataform.network.SICENETWService
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.LogLevel
@@ -21,7 +22,7 @@ class DefaultAppContainerDesktop(
     // Almacenamiento de cookies en archivo para que sobrevivan entre sesiones
     private val cookieStorage = FileCookieStorage()
 
-    private val httpClient = HttpClient {
+    private val httpClient = HttpClient(CIO) {
         install(HttpCookies) {
             storage = cookieStorage
         }

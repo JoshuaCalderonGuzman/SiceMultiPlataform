@@ -40,6 +40,7 @@ kotlin {
             implementation("io.ktor:ktor-client-cio:3.4.3")                         // ← era okhttp 3.0.0
             implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2") // ← era 1.8.1
+            implementation("org.xerial:sqlite-jdbc:3.45.3.0")
         }
 
         commonTest.dependencies {

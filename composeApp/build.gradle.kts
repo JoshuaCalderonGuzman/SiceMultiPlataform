@@ -1,3 +1,4 @@
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -61,6 +62,8 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
             implementation("io.ktor:ktor-client-cio:3.4.3")           // ← CIO para Desktop
             implementation("io.ktor:ktor-client-logging:3.4.3")
+            implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
+            implementation("org.xerial:sqlite-jdbc:3.46.0.0")
             // kotlinx-datetime eliminado aquí — ya viene de commonMain
         }
     }
@@ -76,7 +79,9 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+
     }
+    setProperty("archivesBaseName", "SiceMultiplataform")
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -102,10 +107,36 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.example.sicemultiplataform.MainKt"
+        jvmArgs += listOf("-Dio.ktor.client.engine=cio")
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.example.sicemultiplataform"
+            targetFormats(TargetFormat.Exe,TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "SiceMultiplataform"
             packageVersion = "1.0.0"
+            vendor = "JRK-Corp"
+            copyright = "Copyright © 2023 JRK-Corp"
+            description ="App escolar SICE"
+            modules(
+                "java.net.http",
+                "java.sql",
+                "java.desktop",
+                "jdk.unsupported",
+                "java.naming",
+                "java.logging",
+                "java.management"
+            )
+
+            windows {
+                iconFile.set(project.file("src/jvmMain/resources/Logo.ico"))
+                dirChooser = true  // permite elegir carpeta de instalación
+                perUserInstall = true // instala solo para el usuario actual
+                menuGroup = "SiceMultiplataform"
+                upgradeUuid = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+                shortcut = true
+            }
         }
+        nativeDistributions.windows.iconFile.set(
+            project.file("src/jvmMain/resources/Logo.ico")
+        )
+
     }
 }
