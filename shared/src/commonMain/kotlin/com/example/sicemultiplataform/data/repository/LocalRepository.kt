@@ -11,6 +11,7 @@ import com.example.sicemultiplataform.data.local.entity.KardexEntity
 import com.example.sicemultiplataform.data.local.entity.CalifFinalEntity
 import com.example.sicemultiplataform.data.local.entity.CalifUnidadesEntity
 
+// Clase para acceder a los datos locales
 class LocalRepository(
     private val alumnoDao: AlumnoDao,
     private val cargaDao: CargaDao,
@@ -18,23 +19,23 @@ class LocalRepository(
     private val califFinalDao: CalifFinalDao,
     private val califUnidadesDao: CalifUnidadesDao
 ) {
-    // --- ALUMNO ---
+    //ALUMNO
     fun saveAlumno(entity: AlumnoEntity) = alumnoDao.insert(entity)
     fun getAlumno(control: String) = alumnoDao.get(control)
 
-    // --- CARGA ACADÉMICA ---
+    //CARGA ACADÉMICA
     fun insertCarga(carga: CargaEntity) = cargaDao.insert(carga)
     fun getCargaByControl(control: String) = cargaDao.getByControl(control)
 
-    // --- KARDEX ---
+    //KARDEX
     fun insertKardex(kardex: KardexEntity) = kardexDao.insert(kardex)
     fun getKardexByControl(control: String) = kardexDao.getByControl(control)
 
-    // --- CALIFICACIONES FINALES ---
+    // CALIFICACIONES FINALES
     fun insertCalifFinal(calif: CalifFinalEntity) = califFinalDao.insert(calif)
     fun getCalifFinalByControl(control: String) = califFinalDao.getByControl(control)
 
-    // --- CALIFICACIONES UNIDADES ---
+    //CALIFICACIONES UNIDADES
     fun insertCalifUnidades(calif: CalifUnidadesEntity) = califUnidadesDao.insert(calif)
     fun getCalifUnidadesByControl(control: String) = califUnidadesDao.getByControl(control)
 }

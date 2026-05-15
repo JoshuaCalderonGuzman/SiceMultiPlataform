@@ -8,6 +8,7 @@ import com.example.sicemultiplataform.data.DefaultAppContainerDesktop
 import com.example.sicemultiplataform.data.network.ConnectivityMonitor
 import com.example.sicemultiplataform.data.segurity.SecureSessionManager
 
+
 actual fun snViewModelFactory(): ViewModelProvider.Factory = viewModelFactory {
     initializer {
         val driverFactory = DatabaseDriverFactory()

@@ -7,10 +7,12 @@ import androidx.core.content.edit
 
 actual class SecureSessionManager(private val context: Context) {
 
+
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
+    // Crear el EncryptedSharedPreferences
     private val securePrefs = EncryptedSharedPreferences.create(
         context,
         "secure_user_session",
@@ -19,6 +21,7 @@ actual class SecureSessionManager(private val context: Context) {
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
+    // Implementa las funciones de SecureSessionManager aquí
     actual fun guardarSesion(matricula: String, password: String) {
         securePrefs.edit {
             putString("matricula", matricula)

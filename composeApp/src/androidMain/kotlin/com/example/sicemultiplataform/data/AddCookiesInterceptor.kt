@@ -6,6 +6,7 @@ import okhttp3.Response
 import java.io.IOException
 
 
+// Almacenamiento de cookies en archivo para que sobrevivan entre sesiones
 class AddCookiesInterceptor(
     private val context: Context
 ) : Interceptor {

@@ -39,6 +39,7 @@ fun parseAlumno(xml: String): Alumno {
     println("JSON STRING = $jsonString")
     println("ESTATUS RAW JSON = ${json["estatus"]}")
 
+    // Parsear el JSON
     return Alumno(
         fechaReins        = json["fechaReins"]?.jsonPrimitive?.content ?: "",
         modEducativo      = json["modEducativo"]?.jsonPrimitive?.intOrNull ?: 0,

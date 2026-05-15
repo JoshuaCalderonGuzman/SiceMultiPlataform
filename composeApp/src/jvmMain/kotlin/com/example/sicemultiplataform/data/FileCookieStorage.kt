@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.Properties
 
+// Almacenamiento de cookies en archivo para que sobrevivan entre sesiones
 class FileCookieStorage : CookiesStorage {
 
     private val file = File(System.getProperty("user.home"), ".sicenet/cookies.properties")

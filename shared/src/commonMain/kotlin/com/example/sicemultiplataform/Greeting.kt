@@ -1,5 +1,6 @@
 package com.example.sicemultiplataform
 
+
 class Greeting {
     private val platform = getPlatform()
 

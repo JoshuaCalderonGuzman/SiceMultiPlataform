@@ -70,7 +70,7 @@ class CargaKardexProvider : ContentProvider() {
     }
 
     override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?): Int {
-        return 0 // usar insert con OR REPLACE
+        return 0
     }
 
     override fun getType(uri: Uri): String? = null

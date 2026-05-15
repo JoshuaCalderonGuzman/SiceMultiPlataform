@@ -12,10 +12,12 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import okhttp3.OkHttpClient
 
+// Implementación de AppContainer
 class DefaultAppContainer(
     driverFactory: DatabaseDriverFactory,
     private val context: Context
 ) : AppContainer {
+
 
     private val httpClient = HttpClient(OkHttp) {
         engine {

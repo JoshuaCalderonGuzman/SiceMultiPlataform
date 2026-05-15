@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sicemultiplataform.SICENETApplication
 
+
 actual fun snViewModelFactory(): ViewModelProvider.Factory = viewModelFactory {
     initializer {
         val app = this[APPLICATION_KEY] as SICENETApplication
