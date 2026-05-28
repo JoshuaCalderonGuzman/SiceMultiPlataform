@@ -17,21 +17,10 @@ class ReceivedCookiesInterceptor(
         val setCookieHeaders = originalResponse.headers("Set-Cookie")
 
         if (setCookieHeaders.isNotEmpty()) {
-            val prefs = context.getSharedPreferences(
-                "CookiePrefs",
-                Context.MODE_PRIVATE
-            )
-
-            val existingCookies =
-                prefs.getStringSet("cookies", emptySet())
-                    ?.toMutableSet()
-                    ?: mutableSetOf()
-
-            existingCookies.addAll(setCookieHeaders)
-
-            prefs.edit {
-                putStringSet("cookies", existingCookies)
-            }
+            context.getSharedPreferences("CookiePrefs", Context.MODE_PRIVATE)
+                .edit()
+                .putStringSet("cookies", setCookieHeaders.toSet())
+                .apply()
         }
 
         return originalResponse

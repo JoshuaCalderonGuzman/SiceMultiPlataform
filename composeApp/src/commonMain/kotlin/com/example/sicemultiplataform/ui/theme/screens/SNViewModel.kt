@@ -99,17 +99,11 @@ class SNViewModel(
             connectivityMonitor.isConnected.collect { conectado ->
                 uiState = uiState.copy(isOnline = conectado)
                 if (conectado && uiState.isLogged) {
-                    if (uiState.sesionServidor) {
-                        // Sesión activa → solo sincronizar
-                        val matricula    = uiState.alumno?.matricula    ?: return@collect
-                        val modEducativo = uiState.alumno?.modEducativo ?: return@collect
-                        sincronizarTodo(matricula, modEducativo)
-                    } else {
-                        // Sin sesión en servidor → re-autenticar primero
-                        val matricula = sessionManager.obtenerMatricula() ?: return@collect
-                        val password  = sessionManager.obtenerPassword()  ?: return@collect
-                        login(matricula, password)
-                    }
+                    // Siempre re-autenticar al reconectar,
+                    // no confiar en sesionServidor que puede haber expirado
+                    val matricula = sessionManager.obtenerMatricula() ?: return@collect
+                    val password  = sessionManager.obtenerPassword()  ?: return@collect
+                    login(matricula, password)
                 }
             }
         }
@@ -204,10 +198,17 @@ class SNViewModel(
                     fechaActualizacionCarga     = ahora
                 )
 
-            } catch (e: Exception) {
-                // Si falla la sincronización, cargar desde BD
+            }  catch (e: Exception) {
                 println("SYNC_ERROR: ${e.message}")
-                cargarDesdeLocal(uiState.alumno?.matricula ?: return@launch)
+                // Intentar re-autenticar antes de caer a local
+                val matricula = uiState.alumno?.matricula ?: return@launch
+                val password  = sessionManager.obtenerPassword()
+                if (password != null && uiState.isOnline) {
+                    uiState = uiState.copy(sesionServidor = false)
+                    login(matricula, password)
+                } else {
+                    cargarDesdeLocal(matricula)
+                }
             }
         }
     }

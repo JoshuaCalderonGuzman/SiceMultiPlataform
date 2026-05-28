@@ -24,6 +24,8 @@ class DefaultAppContainer(
             preconfigured = OkHttpClient.Builder()
                 .addInterceptor(AddCookiesInterceptor(context))
                 .addInterceptor(ReceivedCookiesInterceptor(context))
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                 .build()
         }
         install(Logging) { level = LogLevel.HEADERS }

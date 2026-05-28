@@ -54,8 +54,8 @@ fun FinalesSection(calificaciones: List<CalificacionFinal>) {
     }
 
     val califsValidas = calificaciones.filter { it.calif > 0 }
-    val promedio = if (califsValidas.isNotEmpty())
-        califsValidas.sumOf { it.calif }.toDouble() / califsValidas.size
+    val promedio = if (calificaciones.isNotEmpty())
+        calificaciones.sumOf { it.calif }.toDouble() / calificaciones.size
     else 0.0
 
     val colorPromedio = when {
