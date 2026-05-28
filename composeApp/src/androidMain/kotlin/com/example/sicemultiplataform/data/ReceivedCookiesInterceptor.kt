@@ -17,9 +17,23 @@ class ReceivedCookiesInterceptor(
         val setCookieHeaders = originalResponse.headers("Set-Cookie")
 
         if (setCookieHeaders.isNotEmpty()) {
-            context.getSharedPreferences("CookiePrefs", Context.MODE_PRIVATE)
-                .edit()
-                .putStringSet("cookies", setCookieHeaders.toSet())
+            val prefs = context.getSharedPreferences("CookiePrefs", Context.MODE_PRIVATE)
+
+            // Cargar cookies existentes como mapa nombre → valor completo
+            val cookieMap = prefs.getStringSet("cookies", emptySet())
+                ?.associateBy { it.substringBefore("=") }
+                ?.toMutableMap()
+                ?: mutableMapOf()
+
+            // Actualizar solo las cookies que el servidor manda
+            for (cookie in setCookieHeaders) {
+                val nombre = cookie.substringBefore("=")
+                cookieMap[nombre] = cookie
+                println("🍪 ACTUALIZADA: $nombre")
+            }
+
+            prefs.edit()
+                .putStringSet("cookies", cookieMap.values.toSet())
                 .apply()
         }
 

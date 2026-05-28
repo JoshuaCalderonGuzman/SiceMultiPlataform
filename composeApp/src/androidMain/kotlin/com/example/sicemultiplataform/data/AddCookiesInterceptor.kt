@@ -17,7 +17,9 @@ class AddCookiesInterceptor(
             .getSharedPreferences("CookiePrefs", Context.MODE_PRIVATE)
             .getStringSet("cookies", emptySet()) ?: emptySet()
 
+        println("🍪 ENVIANDO COOKIES: ${cookies.size} cookies para ${chain.request().url}")
         for (cookie in cookies) {
+            println("🍪 COOKIE: $cookie")
             builder.addHeader("Cookie", cookie)
         }
         return chain.proceed(builder.build())

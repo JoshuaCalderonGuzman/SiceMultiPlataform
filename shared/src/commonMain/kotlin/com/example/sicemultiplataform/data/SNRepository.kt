@@ -42,7 +42,6 @@ class NetworkSNRepository(
     }
 
     override suspend fun logoutSession() {
-        onClearCookies()
         snApiService.clearCookies()
     }
 

@@ -57,23 +57,16 @@ class SNViewModel(
     init {
         observarConectividad()
         iniciarSyncPeriodico()
-        autoLogin()
     }
 
     fun autoLogin() {
         viewModelScope.launch {
-            val matricula = sessionManager.obtenerMatricula() ?: return@launch
-            val password  = sessionManager.obtenerPassword()  ?: return@launch
-
+            val matricula = sessionManager.obtenerMatricula()
+            val password  = sessionManager.obtenerPassword()
+            println("🟡 AUTOLOGIN: matricula=$matricula password=${if (password != null) "OK" else "NULL"}")
+            if (matricula == null || password == null) return@launch
             uiState = uiState.copy(isLoading = true)
-
-            if (uiState.isOnline) {
-                // Con internet: login normal
-                login(matricula, password)
-            } else {
-                // Sin internet: cargar desde BD local directamente
-                cargarDesdeLocal(matricula)
-            }
+            login(matricula, password)
         }
     }
 
@@ -97,26 +90,41 @@ class SNViewModel(
     private fun observarConectividad() {
         viewModelScope.launch {
             connectivityMonitor.isConnected.collect { conectado ->
+                println("🔵 CONECTIVIDAD: conectado=$conectado isLogged=${uiState.isLogged}")
+                val eraOffline = !uiState.isOnline
                 uiState = uiState.copy(isOnline = conectado)
-                if (conectado && uiState.isLogged) {
-                    // Siempre re-autenticar al reconectar,
-                    // no confiar en sesionServidor que puede haber expirado
-                    val matricula = sessionManager.obtenerMatricula() ?: return@collect
-                    val password  = sessionManager.obtenerPassword()  ?: return@collect
-                    login(matricula, password)
+
+                when {
+                    conectado && uiState.isLogged -> {
+                        println("🟢 CASO: reconectó logueado → re-autenticar")
+                        val matricula = sessionManager.obtenerMatricula() ?: return@collect
+                        val password  = sessionManager.obtenerPassword()  ?: return@collect
+                        login(matricula, password)
+                    }
+                    conectado && !uiState.isLogged -> {
+                        println("🟡 CASO: conectado sin login → autoLogin")
+                        autoLogin()
+                    }
+                    !conectado && !uiState.isLogged -> {
+                        println("🔴 CASO: sin internet sin login → local")
+                        val matricula = sessionManager.obtenerMatricula() ?: return@collect
+                        cargarDesdeLocal(matricula)
+                    }
                 }
             }
         }
     }
     fun login(m: String, p: String) {
         viewModelScope.launch {
+            println("🔐 LOGIN START: m=$m")
             uiState = uiState.copy(isLoading = true, errorMessage = null)
             try {
-                snRepository.logoutSession()
                 val result = snRepository.acceso(m, p)
+                println("🔐 LOGIN RESULT: success=${result.success}")
 
                 if (result.success) {
                     val alumnoParsed = snRepository.alumnoDatos()
+                    println("👤 ALUMNO: matricula=${alumnoParsed.matricula} modEducativo=${alumnoParsed.modEducativo}")
 
                     if (alumnoParsed.matricula.trim().uppercase() != m.trim().uppercase()) {
                         uiState = uiState.copy(isLoading = false, errorMessage = "Sesión incorrecta, intenta nuevamente")
@@ -151,6 +159,7 @@ class SNViewModel(
 
             } catch (e: Exception) {
                 // Sin internet — cargar desde BD local
+                println("🔐 LOGIN EXCEPTION: ${e.message}")
                 cargarDesdeLocal(m)
             }
         }
@@ -159,6 +168,7 @@ class SNViewModel(
     // Descarga todo en paralelo y guarda en BD
     private fun sincronizarTodo(matricula: String, modEducativo: Int) {
         viewModelScope.launch {
+            println("🔄 SYNC START: matricula=$matricula modEducativo=$modEducativo")
             try {
                 val kardexDeferred    = async { snRepository.kardex(modEducativo) }
                 val califDeferred     = async { snRepository.califFinal(modEducativo) }
@@ -169,6 +179,7 @@ class SNViewModel(
                 val finales   = califDeferred.await()
                 val unidades  = unidadesDeferred.await()
                 val carga     = cargaDeferred.await()
+                println("🔄 SYNC OK: kardex=${kardex.materias.size} finales=${finales.size} unidades=${unidades.size} carga=${carga.size}")
 
                 val ahora = System.currentTimeMillis()
 
@@ -198,7 +209,8 @@ class SNViewModel(
                     fechaActualizacionCarga     = ahora
                 )
 
-            }  catch (e: Exception) {
+            } catch (e: Exception) {
+                println("🔄 SYNC ERROR: ${e::class.simpleName} → ${e.message}")
                 println("SYNC_ERROR: ${e.message}")
                 // Intentar re-autenticar antes de caer a local
                 val matricula = uiState.alumno?.matricula ?: return@launch
