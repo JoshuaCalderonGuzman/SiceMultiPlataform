@@ -12,16 +12,26 @@ actual class SecureSessionManager(private val context: Context) {
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
-    // Crear el EncryptedSharedPreferences
-    private val securePrefs = EncryptedSharedPreferences.create(
-        context,
-        "secure_user_session",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val securePrefs = try {
+        EncryptedSharedPreferences.create(
+            context,
+            "secure_user_session",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    } catch (e: Exception) {
+        // Las llaves del KeyStore no coinciden con los datos guardados
+        context.deleteSharedPreferences("secure_user_session")
+        EncryptedSharedPreferences.create(
+            context,
+            "secure_user_session",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
-    // Implementa las funciones de SecureSessionManager aquí
     actual fun guardarSesion(matricula: String, password: String) {
         securePrefs.edit {
             putString("matricula", matricula)
